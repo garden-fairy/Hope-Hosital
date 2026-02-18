@@ -1,1 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hope Clinic — Doctor's Office Roleplay</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Patients sidebar">
+      <header class="sidebar-header">
+        <div>
+          <h1>Hope Clinic</h1>
+          <p class="subtitle">Roleplay Dashboard</p>
+        </div>
+      </header>
+
+      <div class="disclaimer-card" role="note" aria-live="polite">
+        <strong>Disclaimer:</strong> Roleplay / personal organization tool — not medical advice. Data stays on this device only.
+      </div>
+
+      <div class="search-wrap">
+        <label for="patientSearch">Search patients</label>
+        <input id="patientSearch" type="search" placeholder="Type a name…" autocomplete="off" />
+      </div>
+
+      <div class="sidebar-actions">
+        <button id="btnAddPatient" class="primary">+ Add patient</button>
+      </div>
+
+      <div class="patient-list-wrap">
+        <h2 class="section-title">Patients</h2>
+        <ul id="patientList" class="patient-list" aria-label="Patient list"></ul>
+        <p id="patientListEmpty" class="muted hidden">No patients yet. Add one to start.</p>
+      </div>
+
+      <footer class="sidebar-footer">
+        <small class="muted">Offline-first • local-only storage</small>
+      </footer>
+    </aside>
+
+    <main class="main" aria-label="Main panel">
+      <header class="main-header">
+        <div class="main-header-left">
+          <h2 id="selectedPatientName">Select a patient</h2>
+          <p id="selectedPatientMeta" class="muted">Create a profile to begin roleplay visits.</p>
+        </div>
+
+        <div class="main-header-actions">
+          <button id="btnEditPatient" class="ghost" disabled>Edit</button>
+          <button id="btnDeletePatient" class="danger" disabled>Delete</button>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Patient tabs">
+        <button class="tab active" data-tab="overview" id="tab-overview" disabled>Overview</button>
+        <button class="tab" data-tab="history" id="tab-history" disabled>History</button>
+        <button class="tab" data-tab="assessments" id="tab-assessments" disabled>Assessments</button>
+        <button class="tab" data-tab="documents" id="tab-documents" disabled>Documents</button>
+        <button class="tab" data-tab="settings" id="tab-settings">Settings</button>
+      </nav>
+
+      <section class="tab-panel" id="panel-overview" data-panel="overview">
+        <div class="panel-card">
+          <h3>Patient overview</h3>
+          <div id="overviewContent" class="muted">Pick a patient to see their details here.</div>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="panel-history" data-panel="history">
+        <div class="panel-card">
+          <h3>Medical history</h3>
+          <div id="historyContent" class="muted">Pick a patient to see history.</div>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="panel-assessments" data-panel="assessments">
+        <div class="panel-card">
+          <div class="row-between">
+            <div>
+              <h3>Assessments</h3>
+              <p class="muted">Log roleplay visits and view a timeline.</p>
+            </div>
+            <button id="btnNewAssessment" class="primary" disabled>+ New assessment</button>
+          </div>
+
+          <div id="assessmentsEmpty" class="muted hidden">No assessments yet.</div>
+          <ul id="assessmentList" class="assessment-list" aria-label="Assessments timeline"></ul>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="panel-documents" data-panel="documents">
+        <div class="panel-card">
+          <h3>Documents</h3>
+          <p class="muted">Placeholder for future stuff (uploads, scans, printable notes, etc.).</p>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="panel-settings" data-panel="settings">
+        <div class="panel-card">
+          <h3>Settings</h3>
+          <p class="muted">Back up your local data, import data, or reset.</p>
+
+          <div class="settings-grid">
+            <div class="setting-box">
+              <h4>Demo data</h4>
+              <p class="muted">Adds a few clearly fake patients + assessments for testing.</p>
+              <button id="btnDemoData" class="primary">Create demo data</button>
+            </div>
+
+            <div class="setting-box">
+              <h4>Export / Import</h4>
+              <p class="muted">Export a JSON backup. Import replaces current data.</p>
+              <div class="row">
+                <button id="btnExport" class="ghost">Export JSON</button>
+                <label class="file-btn ghost" for="importFile">Import JSON</label>
+                <input id="importFile" class="hidden" type="file" accept="application/json" />
+              </div>
+            </div>
+
+            <div class="setting-box danger-box">
+              <h4>Delete all data</h4>
+              <p class="muted">This wipes all patients + assessments from this browser.</p>
+              <button id="btnWipeAll" class="danger">Delete everything</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="main-footer">
+        <small class="muted">Reminder: This tool is for roleplay / personal organization, not diagnosis.</small>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal: Patient -->
+  <div class="modal-backdrop hidden" id="modalPatient" role="dialog" aria-modal="true" aria-labelledby="modalPatientTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalPatientTitle">New patient</h3>
+        <button class="icon-btn" id="closePatientModal" aria-label="Close">✕</button>
+      </div>
+
+      <form id="patientForm" class="form">
+        <div class="grid-2">
+          <div>
+            <label for="p_name">Full name *</label>
+            <input id="p_name" name="name" required placeholder="e.g., Alex Example" />
+          </div>
+          <div>
+            <label for="p_dob">Date of birth *</label>
+            <input id="p_dob" name="dob" type="date" required />
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div>
+            <label for="p_sex">Sex at birth (optional)</label>
+            <input id="p_sex" name="sexAtBirth" placeholder="e.g., Female" />
+          </div>
+          <div>
+            <label for="p_gender">Gender identity (optional)</label>
+            <input id="p_gender" name="genderIdentity" placeholder="e.g., Woman" />
+          </div>
+          <div>
+            <label for="p_pronouns">Pronouns (optional)</label>
+            <input id="p_pronouns" name="pronouns" placeholder="e.g., she/her" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="p_contact">Contact notes (optional)</label>
+            <input id="p_contact" name="contactNotes" placeholder="e.g., prefers text" />
+          </div>
+          <div>
+            <label for="p_emergency">Emergency contact (optional)</label>
+            <input id="p_emergency" name="emergencyContact" placeholder="Name + number" />
+          </div>
+        </div>
+
+        <hr />
+
+        <h4>Medical history</h4>
+        <div class="grid-2">
+          <div>
+            <label for="h_conditions">Conditions</label>
+            <textarea id="h_conditions" name="conditions" rows="3" placeholder="List conditions…"></textarea>
+          </div>
+          <div>
+            <label for="h_allergies">Allergies</label>
+            <textarea id="h_allergies" name="allergies" rows="3" placeholder="List allergies…"></textarea>
+          </div>
+          <div>
+            <label for="h_meds">Medications</label>
+            <textarea id="h_meds" name="medications" rows="3" placeholder="List meds…"></textarea>
+          </div>
+          <div>
+            <label for="h_surgeries">Surgeries</label>
+            <textarea id="h_surgeries" name="surgeries" rows="3" placeholder="Surgeries…"></textarea>
+          </div>
+          <div>
+            <label for="h_family">Family history</label>
+            <textarea id="h_family" name="familyHistory" rows="3"></textarea>
+          </div>
+          <div>
+            <label for="h_social">Social history</label>
+            <textarea id="h_social" name="socialHistory" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label for="h_notes">Other notes</label>
+          <textarea id="h_notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="ghost" id="cancelPatient">Cancel</button>
+          <button type="submit" class="primary" id="savePatient">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Assessment -->
+  <div class="modal-backdrop hidden" id="modalAssessment" role="dialog" aria-modal="true" aria-labelledby="modalAssessmentTitle">
+    <div class="modal wide">
+      <div class="modal-header">
+        <h3 id="modalAssessmentTitle">New assessment</h3>
+        <button class="icon-btn" id="closeAssessmentModal" aria-label="Close">✕</button>
+      </div>
+
+      <form id="assessmentForm" class="form">
+        <div class="grid-3">
+          <div>
+            <label for="a_template">Template</label>
+            <select id="a_template" name="template">
+              <option value="general">General Intake</option>
+              <option value="dizziness">Dizziness / POTS-style Check</option>
+            </select>
+          </div>
+          <div>
+            <label for="a_clinician">Clinician name (roleplay)</label>
+            <input id="a_clinician" name="clinician" placeholder="e.g., Dr. Pixel" />
+          </div>
+          <div>
+            <label for="a_datetime">Date/time</label>
+            <input id="a_datetime" name="datetime" type="datetime-local" />
+          </div>
+        </div>
+
+        <div>
+          <label for="a_chief">Chief complaint</label>
+          <input id="a_chief" name="chiefComplaint" placeholder="Main reason for visit…" />
+        </div>
+
+        <div id="assessmentFields"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="ghost" id="cancelAssessment">Cancel</button>
+          <button type="submit" class="primary" id="saveAssessment">Save assessment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm -->
+  <div class="modal-backdrop hidden" id="modalConfirm" role="dialog" aria-modal="true" aria-labelledby="modalConfirmTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalConfirmTitle">Confirm</h3>
+        <button class="icon-btn" id="closeConfirmModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmText">Are you sure?</p>
+      </div>
+      <div class="modal-actions">
+        <button class="ghost" id="confirmCancel">Cancel</button>
+        <button class="danger" id="confirmOk">Yes, do it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+</body>
+</html>
 
